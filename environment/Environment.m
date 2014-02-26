@@ -1,4 +1,4 @@
-function[traffic_matrix,traffic_image_matrix,boarded]=Environment(time)
+function[traffic_matrix,traffic_image_matrix,boarded,pirate_pos2]=Environment(time)
 % ENVIRONMENT Subsystem that generates map+ships+pirates
 % Provide the current simulation time and 
 % the return is the environment shipping matrix
@@ -40,4 +40,5 @@ function[traffic_matrix,traffic_image_matrix,boarded]=Environment(time)
     %update the shipping map matrix
         [traffic_matrix,traffic_image_matrix]=PlaceShips(ship_pos_east_update, ship_pos_west_update,boats_pos_update,pirate_pos,map,pirate_boat);
 
+        pirate_pos2 = pirate_pos;
 end
