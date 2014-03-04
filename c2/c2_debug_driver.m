@@ -48,19 +48,48 @@ for t = 0:dt:10000
     % RADAR
     % check to make sure pirate is in radar view and dwell time is long enough
     % for track generation
-    if((pirate_pos(1) >= p8_pos(1)-100 & pirate_pos(1) <= p8_pos(1)+100) & ...
-        (pirate_pos(2) >= p8_pos(2)-100 & pirate_pos(2) <= p8_pos(2)+100))
-        % pirate in radar field of view
+    p8_grid = round(p8_pos);
+    origin = [p8_grid(1)-100 p8_grid(2)-100]-1;
+    radar_image = global_map(p8_grid(2)-100:p8_grid(2)+100, p8_grid(1)-100:p8_grid(1)+100);
+    % Apply threshold
+    inx = find(radar_image ~= 255);
+    radar_image1 = radar_image;
+    radar_image1(inx) = 0;
+%     imshow(radar_image1);
 
-    else
+    % Image processing
+    outline = bwperim(radar_image1, 4);
+%     imshow(outline)
 
+    % Calculate segment properties, find detection
+    stat = regionprops(outline, 'Centroid', 'Area');
+    new_detection = zeros(length(stat), 3);
+    for k = 1:length(stat)
+        new_detection(k, 1:2) = stat(k).Centroid + origin;
+        new_detection(k, 3) = stat(k).Area;
     end
-    if(t == 0)
-        last_pirate_pos = pirate_pos(1:2);
+
+    % NEED TRACKING ALGORITHM HERE!
+
+    % check to see if radar is in view
+    test = new_detection(:, 1:2) - repmat(pirate_pos(1:2), size(new_detection, 1), 1);
+    test = sqrt(test(:, 1).^2 + test(:, 2).^2); % distance of detection to pirate position
+    [test inx] = sort(test);
+    if(min(test) < 1) % in view
+        detection_age = detection_age + 1;
+        if(detection_age > 1)
+            detected_pirate_pos = new_detection(inx(1), 1:2);
+            detected_pirate_vel = (new_detection(inx(1), 1:2) - last_pirate_pos)/dt;
+        end
+        last_pirate_pos = new_detection(inx(1), 1:2);
+    else % no pirate in view
+        detected_pirate_pos = [];
+        detected_pirate_vel = [];
+        detection_age = 0;
     end
-    radar_output(1).position = pirate_pos(1:2);
-    radar_output(1).velocity = (pirate_pos(1:2) - last_pirate_pos)/dt;
-    last_pirate_pos = pirate_pos(1:2);
+    % Radar output
+    radar_output(1).position = detected_pirate_pos;
+    radar_output(1).velocity = detected_pirate_vel;
 
     % EO
     % Generate EO image, take the 50 x 50 from eo_map
@@ -88,6 +117,7 @@ for t = 0:dt:10000
     plot(pirate_pos(1), pirate_pos(2), 'rs', ...
         p8_pos(1), p8_pos(2), 'bs', ...
         h60_pos(1), h60_pos(2), 'go');
+    plot(new_detection(:, 1), new_detection(:, 2), 'co'); % Detection
     %legend('Pirate', 'P8', 'H60');
     plot(search_waypoints(:, 1), search_waypoints(:, 2), 'gs-');
     rect = [p8_pos(1)-100 p8_pos(2)-100, 200, 200];
