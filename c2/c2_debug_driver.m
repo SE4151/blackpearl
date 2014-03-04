@@ -21,6 +21,12 @@ dt = 100; % time step
 for t = 0:dt:10000
     % Generate environment map
     [global_map, eo_map, boarded, pirate_pos] = Environment(t);
+    if(boarded == 1)
+        figure(999);
+        text(220, 230, 'GAME OVER!', 'color', 'r', 'FontSize', 50);
+        break;
+    end
+
 %    pirate_pos = [0 0];
 
     % Flight
@@ -60,7 +66,12 @@ for t = 0:dt:10000
     % Generate EO image, take the 50 x 50 from eo_map
     h60_grid = round(h60_pos);
     eo_image = eo_map(h60_grid(2)-25:h60_grid(2)+25, h60_grid(1)-25:h60_grid(1)+25);
-    eo_output.valid_target = 0;
+    score = corr2(eo_image, pirate_ref);
+    if(score > 0.99)
+        eo_output.valid_target = 1;
+    else
+        eo_output.valid_target = 0;
+    end
 
     % C2
 %    p8_waypoint = pirate_pos(1:2);
@@ -82,15 +93,18 @@ for t = 0:dt:10000
     rect = [p8_pos(1)-100 p8_pos(2)-100, 200, 200];
     rectangle('Position', rect, 'EdgeColor', 'b');
     text(20, 580, sprintf('t = %.0f', t), 'color', 'r', 'FontSize', 16, 'BackgroundColor', 'w');
+    if(eo_output.valid_target == 1)
+        text(220, 230, 'PIRATE INTERCEPTED!', 'color', 'g', 'FontSize', 50);
+        break;
+    end
     axis off;
     hold off;
 
     figure(9);
     imshow(eo_image);
     set(gcf, 'Name', 'EO Image');
-%    pause(0.1);
+    pause(0.01);
 end
-
 
 %%
 map = imread('africa_map.png');
