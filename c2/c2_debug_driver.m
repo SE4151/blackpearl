@@ -21,6 +21,7 @@ dt = 100; % time step
 for t = 0:dt:10000
     % Generate environment map
     [global_map, eo_map, boarded, pirate_pos] = Environment(t);
+%    pirate_pos = [0 0];
 
     % Flight
     % Fly P8

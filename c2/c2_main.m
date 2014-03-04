@@ -99,11 +99,13 @@ switch p8_strategy
     case 'search'
         % Need to know the current position
         d1 = norm(search_waypoints(1, :) - p8_position);
-        d2 = norm(search_waypoints(2, :) - pi_position);
+        d2 = norm(search_waypoints(2, :) - p8_position);
         if(d1 < 2)
             p8_waypoint = search_waypoints(2, :);
+            last_waypoint = p8_waypoint;
         elseif(d2 < 2)
             p8_waypoint = search_waypoints(1, :);
+            last_waypoint = p8_waypoint;
         else
             p8_waypoint = last_waypoint;
         end
