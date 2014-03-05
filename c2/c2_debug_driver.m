@@ -77,12 +77,15 @@ for t = 0:dt:10000
     % NEED TRACKING ALGORITHM HERE!
 
     % check to see if radar is in view
+    if(t == 0)
+        detection_age = 0;
+    end
     test = new_detection(:, 1:2) - repmat(pirate_pos(1:2), size(new_detection, 1), 1);
     test = sqrt(test(:, 1).^2 + test(:, 2).^2); % distance of detection to pirate position
-    [test inx] = sort(test);
-    if(min(test) < 1) % in view
+    [test inx] = sort(test); % find the detection that's closest to the pirate position
+    if(min(test) < 2*sqrt(2)) % in view
         detection_age = detection_age + 1;
-        if(detection_age > 1)
+        if(detection_age > 2)
             detected_pirate_pos = new_detection(inx(1), 1:2);
             detected_pirate_vel = (new_detection(inx(1), 1:2) - last_pirate_pos)/dt;
         end
