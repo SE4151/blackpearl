@@ -1,5 +1,6 @@
 %%
 addpath('../environment/');
+addpath('../flight/');
 load('pirate_boat.mat');
 pirate_ref = double(map);
 clear map;
@@ -15,7 +16,8 @@ p8_pos = launch_pos;
 h60_pos = launch_pos;
 p8_waypoint = search_waypoints(1, :);
 h60_waypoint = p8_waypoint;
-
+c2_output.p8_waypoint = p8_waypoint;
+c2_output.h60_waypoint = h60_waypoint;
 
 dt = 100; % time step
 for t = 0:dt:10000
@@ -31,19 +33,22 @@ for t = 0:dt:10000
 
     % Flight
     % Fly P8
-    if(norm(p8_waypoint-p8_pos) <= p8_speed*dt)% check to make sure we don't fly pass the waypoint
-        p8_pos = p8_waypoint;
-    else
-        p8_pos = p8_pos + (p8_waypoint-p8_pos)./norm(p8_waypoint-p8_pos).*p8_speed*dt;
-    end
-    % Fly H60
-    if(norm(h60_waypoint-h60_pos) <= h60_speed*dt)% check to make sure we don't fly pass the waypoint
-        h60_pos = h60_waypoint;
-    else
-        h60_pos = h60_pos + (h60_waypoint-h60_pos)./norm(h60_waypoint-h60_pos).*h60_speed*dt;
-    end
-    flight_output.p8_position = p8_pos;
-    flight_output.h60_position = h60_pos;
+%     if(norm(p8_waypoint-p8_pos) <= p8_speed*dt)% check to make sure we don't fly pass the waypoint
+%         p8_pos = p8_waypoint;
+%     else
+%         p8_pos = p8_pos + (p8_waypoint-p8_pos)./norm(p8_waypoint-p8_pos).*p8_speed*dt;
+%     end
+%     % Fly H60
+%     if(norm(h60_waypoint-h60_pos) <= h60_speed*dt)% check to make sure we don't fly pass the waypoint
+%         h60_pos = h60_waypoint;
+%     else
+%         h60_pos = h60_pos + (h60_waypoint-h60_pos)./norm(h60_waypoint-h60_pos).*h60_speed*dt;
+%     end
+%     flight_output.p8_position = p8_pos;
+%     flight_output.h60_position = h60_pos;
+    [flight_output] = flight_main(t, c2_output);
+    p8_pos = flight_output.p8_position;
+    h60_pos = flight_output.h60_position;
 
     % RADAR
     % check to make sure pirate is in radar view and dwell time is long enough
