@@ -32,72 +32,14 @@ for t = 0:dt:10000
 %    pirate_pos = [0 0];
 
     % Flight
-    % Fly P8
-%     if(norm(p8_waypoint-p8_pos) <= p8_speed*dt)% check to make sure we don't fly pass the waypoint
-%         p8_pos = p8_waypoint;
-%     else
-%         p8_pos = p8_pos + (p8_waypoint-p8_pos)./norm(p8_waypoint-p8_pos).*p8_speed*dt;
-%     end
-%     % Fly H60
-%     if(norm(h60_waypoint-h60_pos) <= h60_speed*dt)% check to make sure we don't fly pass the waypoint
-%         h60_pos = h60_waypoint;
-%     else
-%         h60_pos = h60_pos + (h60_waypoint-h60_pos)./norm(h60_waypoint-h60_pos).*h60_speed*dt;
-%     end
-%     flight_output.p8_position = p8_pos;
-%     flight_output.h60_position = h60_pos;
     [flight_output] = flight_main(t, c2_output);
     p8_pos = flight_output.p8_position;
     h60_pos = flight_output.h60_position;
 
     % RADAR
-    % check to make sure pirate is in radar view and dwell time is long enough
-    % for track generation
     p8_grid = round(p8_pos);
     origin = [p8_grid(1)-100 p8_grid(2)-100]-1;
-    radar_image = global_map(p8_grid(2)-100:p8_grid(2)+100, p8_grid(1)-100:p8_grid(1)+100);
-    % Apply threshold
-    inx = find(radar_image ~= 255);
-    radar_image1 = radar_image;
-    radar_image1(inx) = 0;
-%     imshow(radar_image1);
-
-    % Image processing
-    outline = bwperim(radar_image1, 4);
-%     imshow(outline)
-
-    % Calculate segment properties, find detection
-    stat = regionprops(outline, 'Centroid', 'Area');
-    new_detection = zeros(length(stat), 3);
-    for k = 1:length(stat)
-        new_detection(k, 1:2) = stat(k).Centroid + origin;
-        new_detection(k, 3) = stat(k).Area;
-    end
-
-    % NEED TRACKING ALGORITHM HERE!
-
-    % check to see if radar is in view
-    if(t == 0)
-        detection_age = 0;
-    end
-    test = new_detection(:, 1:2) - repmat(pirate_pos(1:2), size(new_detection, 1), 1);
-    test = sqrt(test(:, 1).^2 + test(:, 2).^2); % distance of detection to pirate position
-    [test inx] = sort(test); % find the detection that's closest to the pirate position
-    if(min(test) < 2*sqrt(2)) % in view
-        detection_age = detection_age + 1;
-        if(detection_age > 2)
-            detected_pirate_pos = new_detection(inx(1), 1:2);
-            detected_pirate_vel = (new_detection(inx(1), 1:2) - last_pirate_pos)/dt;
-        end
-        last_pirate_pos = new_detection(inx(1), 1:2);
-    else % no pirate in view
-        detected_pirate_pos = [];
-        detected_pirate_vel = [];
-        detection_age = 0;
-    end
-    % Radar output
-    radar_output(1).position = detected_pirate_pos;
-    radar_output(1).velocity = detected_pirate_vel;
+    radar_output = c2_radar_main(t, dt, global_map, p8_pos);
 
     % EO
     % Generate EO image, take the 50 x 50 from eo_map
@@ -111,11 +53,9 @@ for t = 0:dt:10000
     end
 
     % C2
-%    p8_waypoint = pirate_pos(1:2);
-%    h60_waypoint = p8_waypoint;
-    c2_output = c2_main(t, dt, radar_output, eo_output, flight_output);
-    p8_waypoint = c2_output.p8_waypoint;
-    h60_waypoint = c2_output.h60_waypoint;
+     c2_output = c2_main(t, dt, radar_output, eo_output, flight_output);
+     p8_waypoint = c2_output.p8_waypoint;
+     h60_waypoint = c2_output.h60_waypoint;
 
     % Display scenario
     figure(999);
@@ -125,8 +65,13 @@ for t = 0:dt:10000
     plot(pirate_pos(1), pirate_pos(2), 'rs', ...
         p8_pos(1), p8_pos(2), 'bs', ...
         h60_pos(1), h60_pos(2), 'go');
-    plot(new_detection(:, 1), new_detection(:, 2), 'co'); % Detection
-    %legend('Pirate', 'P8', 'H60');
+    for k = 1:length(radar_output)
+        plot(radar_output(k).history(:, 1), radar_output(k).history(:, 2), 'm-');
+        plot(radar_output(k).pos(1), radar_output(k).pos(2), 'r*');
+        text(radar_output(k).pos(1), radar_output(k).pos(2), num2str(radar_output(k).id));
+    end
+%     legend('Pirate', 'P8', 'H60', 'Radar Track', 'Current Position');
+
     plot(search_waypoints(:, 1), search_waypoints(:, 2), 'gs-');
     rect = [p8_pos(1)-100 p8_pos(2)-100, 200, 200];
     rectangle('Position', rect, 'EdgeColor', 'b');

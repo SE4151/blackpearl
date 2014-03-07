@@ -2,7 +2,7 @@ function [c2_output] = c2_main(time, dt, radar_input, eo_input, flight_input)
 % The entry point for C2 sub-system.
 %
 if(nargin==0)
-   disp('BLACK PEARL - Command and Control System 1.0');
+   disp('BLACK PEARL - Command and Control System 1.1');
    return;
 end
 
@@ -29,20 +29,58 @@ valid_target = eo_input.valid_target;
 p8_position = flight_input.p8_position;
 h60_position = flight_input.h60_position;
 
+persistent track_id;
+if(time == 0)
+   track_id = 0;
+end
+
 %% C2 implemenation
 
-% A2.1 Analyze rdar data
+% A2.1 Analyze radar data
 % Compare speed of track
 pirate_speed = 1/120;
 pirate_pos = [];
 for k = 1:length(radar_input)
-   speed = norm(radar_track(k).velocity);
-   % Determine ship type
-   if(speed > pirate_speed * 0.9 || speed < pirate_speed * 1.1)
-       % Determine pirate location
-       pirate_pos = radar_track(k).position;
-       pirate_vel = radar_track(k).velocity;
-   end
+   speed(k) = norm(radar_track(k).vel);
+   track_name(k) = radar_track(k).id;
+   age(k) = time - radar_track(k).initiation_time;
+   age(k) = size(radar_track(k).history, 1);
+end
+
+% find the fastest one
+if(length(radar_input))
+    potential_inx = find(speed > pirate_speed*0.9);
+    if(length(potential_inx) > 0)
+        % prefer the older one
+        [dummy oldest_inx] = max(age(potential_inx));
+        inx = potential_inx(oldest_inx);
+        % Determine pirate location
+        pirate_pos = radar_track(inx).pos;
+        pirate_vel = radar_track(inx).vel;
+        if(radar_track(inx).id ~= track_id)
+            track_id = radar_track(inx).id;
+ %           disp(sprintf('track id: %.0f', track_id));
+        end
+    end
+
+%     [max_speed max_inx] = max(speed);
+%
+%     if(max_speed > pirate_speed*0.9) % Need to be fast enough
+%         % Determine pirate location
+%         pirate_pos = radar_track(max_inx).pos;
+%         pirate_vel = radar_track(max_inx).vel;
+%         if(radar_track(max_inx).id ~= track_id)
+%             track_id = radar_track(max_inx).id;
+% %            disp(sprintf('track id: %.0f', track_id));
+%         end
+%     end
+    figure(99);
+    bar(track_name, speed);
+    hold on;
+    plot(track_name, 0.9*pirate_speed*ones(length(track_name), 1), 'r-');
+    hold off;
+    xlabel('Track ID');
+    ylabel('Track Speed (pixel/s)');
 end
 
 % A2.2 Generate valid target flag
@@ -70,8 +108,10 @@ switch h60_strategy
         else
             % we can do better with proportional navigation
             % predict where the pirate will be in the next time step
+            gain = norm(h60_position-pirate_pos) * 0.5; % navigation gain
+            gain = min(gain, 10);
             pirate_speed = 1/120; % pixel/sec
-            next_pirate_pos = pirate_pos + pirate_vel/norm(pirate_vel)*pirate_speed*dt;
+            next_pirate_pos = pirate_pos + pirate_vel/norm(pirate_vel)*pirate_speed*dt*gain;
             h60_waypoint = next_pirate_pos;
         end
     otherwise
