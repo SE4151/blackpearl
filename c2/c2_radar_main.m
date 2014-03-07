@@ -3,7 +3,7 @@ function track_output = c2_radar_main(time, dt, global_map, p8_pos)
 % grab image from global map
 p8_grid = round(p8_pos);
 origin = [p8_grid(1)-100 p8_grid(2)-100]-1;
-radar_image = global_map(p8_grid(2)-100:p8_grid(2)+100, p8_grid(1)-100:p8_grid(1)+100);
+radar_image = global_map(p8_grid(2)-100:p8_grid(2)+99, p8_grid(1)-100:p8_grid(1)+99);
 % Apply threshold
 inx = find(radar_image ~= 255);
 radar_image1 = radar_image;

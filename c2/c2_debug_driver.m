@@ -2,9 +2,9 @@
 addpath('../environment/');
 addpath('../flight/');
 load('pirate_boat.mat');
-pirate_ref = double(map);
+pirate_ref = (map);
 clear map;
-
+clc
 % parametrs
 p8_speed = 1/10; % pixel/sec
 h60_speed = 1/30; % pixel/sec
@@ -18,11 +18,27 @@ p8_waypoint = search_waypoints(1, :);
 h60_waypoint = p8_waypoint;
 c2_output.p8_waypoint = p8_waypoint;
 c2_output.h60_waypoint = h60_waypoint;
+play_back = 0;
 
-dt = 100; % time step
+dt = 120; % time step
 for t = 0:dt:10000
     % Generate environment map
-    [global_map, eo_map, boarded, pirate_pos] = Environment(t);
+    if(play_back)
+        global_map = scenario(t/dt+1).global_map;
+        eo_map = scenario(t/dt+1).eo_map;
+        boarded = scenario(t/dt+1).boarded;
+        pirate_pos = scenario(t/dt+1).pirate_pos;
+    else
+        [global_map, eo_map, boarded, pirate_pos] = Environment(t);
+        if(t == 0)
+            clear scenario;
+        end
+        scenario(t/dt+1).global_map = global_map;
+        scenario(t/dt+1).eo_map = eo_map;
+        scenario(t/dt+1).boarded = boarded;
+        scenario(t/dt+1).pirate_pos = pirate_pos;
+    end
+
     if(boarded == 1)
         figure(999);
         text(220, 230, 'GAME OVER!', 'color', 'r', 'FontSize', 50);
@@ -46,7 +62,7 @@ for t = 0:dt:10000
     h60_grid = round(h60_pos);
     eo_image = eo_map(h60_grid(2)-25:h60_grid(2)+25, h60_grid(1)-25:h60_grid(1)+25);
     score = corr2(eo_image, pirate_ref);
-    if(score > 0.99)
+    if(score > 0.90)
         eo_output.valid_target = 1;
     else
         eo_output.valid_target = 0;
@@ -60,7 +76,8 @@ for t = 0:dt:10000
     % Display scenario
     figure(999);
     imshow(global_map);
-    ylim([200 600]);
+%    ylim([200 600]);
+    axis([origin(1) origin(1)+202 origin(2) origin(2)+202]);
     hold on,
     plot(pirate_pos(1), pirate_pos(2), 'rs', ...
         p8_pos(1), p8_pos(2), 'bs', ...
@@ -84,7 +101,7 @@ for t = 0:dt:10000
     hold off;
 
     figure(9);
-    imshow(eo_image);
+    imshow(eo_image, 'InitialMagnification', 400);
     set(gcf, 'Name', 'EO Image');
-    pause(0.01);
+%    pause(0.01);
 end
