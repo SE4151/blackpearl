@@ -7,7 +7,7 @@ function[traffic_matrix,traffic_image_matrix,boarded,pirate_pos2]=Environment(ti
 % ...starts at time=0 and progresses. IF you want to run it just once, then...
 % ...ensure you run it initially with a time=0
 
-    persistent pirate_pos ship_pos_east ship_pos_west boats_pos tanker_id pirate_boat
+    persistent pirate_pos ship_pos_east ship_pos_west boats_pos tanker_id pirate_boat base_map;
 
 %% 
     % Initialize if time=0
@@ -23,10 +23,11 @@ function[traffic_matrix,traffic_image_matrix,boarded,pirate_pos2]=Environment(ti
         % get the pirate picture
             load('pirate_boat.mat'); %The picture of a boat is in variable 'map'
             pirate_boat=map;
+            base_map = GenMap;
         end
     %% Generate shipping and pirate environment matrices
     %read and show map
-        map=GenMap;
+        map=base_map;
   
     %update ship positions with time
         [ship_pos_east_update, ship_pos_west_update,boats_pos_update]=ShipMatrix(time,ship_pos_east,ship_pos_west,boats_pos);
