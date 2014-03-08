@@ -1,4 +1,4 @@
-function track_output = c2_radar_main(time, dt, global_map, p8_pos)
+function track_output = c2_radar_main(time, global_map, p8_pos)
 
 % grab image from global map
 p8_grid = round(p8_pos);

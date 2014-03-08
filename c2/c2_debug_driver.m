@@ -55,7 +55,7 @@ for t = 0:dt:10000
     % RADAR
     p8_grid = round(p8_pos);
     origin = [p8_grid(1)-100 p8_grid(2)-100]-1;
-    radar_output = c2_radar_main(t, dt, global_map, p8_pos);
+    radar_output = c2_radar_main(t, global_map, p8_pos);
 
     % EO
     % Generate EO image, take the 50 x 50 from eo_map
