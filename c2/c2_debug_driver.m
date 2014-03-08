@@ -1,6 +1,7 @@
 %%
 addpath('../environment/');
 addpath('../flight/');
+addpath('../radar/');
 load('pirate_boat.mat');
 pirate_ref = (map);
 clear map;
@@ -57,6 +58,9 @@ for t = 0:dt:10000
     origin = [p8_grid(1)-100 p8_grid(2)-100]-1;
     radar_output = c2_radar_main(t, global_map, p8_pos);
 
+    % RADAR Kimmel
+    [track] = RadarKimmel(t, p8_pos, global_map);
+
     % EO
     % Generate EO image, take the 50 x 50 from eo_map
     h60_grid = round(h60_pos);
@@ -76,8 +80,8 @@ for t = 0:dt:10000
     % Display scenario
     figure(999);
     imshow(global_map);
-%    ylim([200 600]);
-    axis([origin(1) origin(1)+202 origin(2) origin(2)+202]);
+    ylim([200 600]);
+%    axis([origin(1) origin(1)+202 origin(2) origin(2)+202]);
     hold on,
     plot(pirate_pos(1), pirate_pos(2), 'rs', ...
         p8_pos(1), p8_pos(2), 'bs', ...
@@ -88,6 +92,13 @@ for t = 0:dt:10000
         text(radar_output(k).pos(1), radar_output(k).pos(2), num2str(radar_output(k).id));
     end
 %     legend('Pirate', 'P8', 'H60', 'Radar Track', 'Current Position');
+    history = zeros(length(track), 2);
+    for k = 1:length(track)
+        if(~isempty(track(k).position))
+            history(k, :) = track(k).position;
+        end
+    end
+    plot(history(:, 1), history(:, 2), 'co');
 
     plot(search_waypoints(:, 1), search_waypoints(:, 2), 'gs-');
     rect = [p8_pos(1)-100 p8_pos(2)-100, 200, 200];

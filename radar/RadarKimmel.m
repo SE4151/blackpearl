@@ -9,8 +9,8 @@ function [ Pirates] = Radar( Time, postion, map )
 % ...ensure you run it initially with a time=0
 %  
 
-	aircraftx = postion(1);
-	aircrafty = postion(2);
+	aircraftx = round(postion(1));
+	aircrafty = round(postion(2));
 
 	Pirates=Radar_Output_Interface;
 	persistent Array1 Array2 Array3 Pirates2 Pirates3
