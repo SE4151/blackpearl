@@ -47,7 +47,7 @@ for k = 1:length(radar_input)
    age(k) = size(radar_track(k).history, 1);
 end
 
-% find the fastest one
+% Choose a track base on speed and age
 if(length(radar_input))
     potential_inx = find(speed > pirate_speed*0.9);
     if(length(potential_inx) > 0)
@@ -63,24 +63,13 @@ if(length(radar_input))
         end
     end
 
-%     [max_speed max_inx] = max(speed);
-%
-%     if(max_speed > pirate_speed*0.9) % Need to be fast enough
-%         % Determine pirate location
-%         pirate_pos = radar_track(max_inx).pos;
-%         pirate_vel = radar_track(max_inx).vel;
-%         if(radar_track(max_inx).id ~= track_id)
-%             track_id = radar_track(max_inx).id;
-% %            disp(sprintf('track id: %.0f', track_id));
-%         end
-%     end
-    figure(99);
-    bar(track_name, speed);
-    hold on;
-    plot(track_name, 0.9*pirate_speed*ones(length(track_name), 1), 'r-');
-    hold off;
-    xlabel('Track ID');
-    ylabel('Track Speed (pixel/s)');
+%     figure(99);
+%     bar(track_name, speed);
+%     hold on;
+%     plot(track_name, 0.9*pirate_speed*ones(length(track_name), 1), 'r-');
+%     hold off;
+%     xlabel('Track ID');
+%     ylabel('Track Speed (pixel/s)');
 end
 
 % A2.2 Generate valid target flag
@@ -91,7 +80,6 @@ end
 % A2.3.1 Determine H60 Flight Strategy
 if(isempty(pirate_pos)) % No pirate found
     h60_strategy = 'search';
-
 else
     h60_strategy = 'intercept';
 end
